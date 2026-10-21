@@ -79,8 +79,12 @@ init_db()
 
 
 def fail(status: int, message: str):
+    if status >= 500:
+        print(
+            f"Application error {status}: {message}",
+            flush=True
+        )
     raise HTTPException(status_code=status, detail=message)
-
 
 def require_obj(v, name):
     if not isinstance(v, dict):
