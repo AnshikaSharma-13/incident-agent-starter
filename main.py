@@ -216,10 +216,30 @@ Return exactly one proposal per input dossier, in input order."""
 
         return all_proposals
 
+    
     except HTTPException:
         raise
+    except requests.HTTPError as e:
+        response = e.response
+        if response is not None:
+            # Log the provider's error without logging your API key.
+            print(
+                f"Model API HTTP {response.status_code}: "
+                f"{response.text[:1000]}"
+            )
+        else:
+            print(f"Model API HTTP error: {type(e).__name__}")
+        fail(502, "Model API rejected the request; check Render logs")
+    except requests.RequestException as e:
+        print(f"Model network error: {type(e).__name__}")
+        fail(502, "Model API connection failed; check Render logs")
+    except (KeyError, IndexError, TypeError, ValueError) as e:
+        print(f"Model response parsing error: {type(e).__name__}")
+        fail(502, "Model returned an unexpected response; check Render logs")
     except Exception as e:
-        fail(502, f"Model request/JSON parsing failed: {type(e).__name__}")
+        print(f"Unexpected model error: {type(e).__name__}: {str(e)[:500]}")
+        fail(502, "Unexpected model error; check Render logs")
+
 
 def dossier_fingerprint(dossier):
     return sha256(canonical(dossier))
